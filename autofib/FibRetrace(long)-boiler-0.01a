@@ -91,12 +91,10 @@ cS = 99999
 //t764 = 0
 endif
 lL = MIN(lL, Low)
-//fibHigh = hH
 fbL = lL
 //support = cS // not needed at the moment
 if not fV then
 // Calculate fib levels
-//hMS = (fibHigh-fbL)
 hMS = (hH-fbL)
 t236 = fbL + hMS * 0.236
 t382 = fbL + hMS * 0.382
@@ -114,8 +112,7 @@ endif //if fibSet
 once currentStrategy = 0
 
 // -------------------------- \
-// Auto-Fib (Long) Optimised
-// Requires RSI-Pop
+// Strategy Selection
 // -------------------------- /
 
 if (not onMarket) and fibSet and (close < t236) then
