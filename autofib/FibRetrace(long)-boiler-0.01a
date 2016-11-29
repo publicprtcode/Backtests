@@ -1,0 +1,173 @@
+// ============================ \
+// Fib Retracement system (long)
+// v 0.01a
+//
+// ============================ /
+
+
+// -------------------------- \
+// Global Settings
+// -------------------------- /
+DEFPARAM PRELOADBARS = 1000
+once positionSize = 4
+
+// ================================= \
+// Global indicators commplied inline
+// ================================= /
+rsi14 = rsi[14] // required by RSI Pop
+
+// -------------------------- \
+// RSI-Pop Inidcator
+// -------------------------- /
+once rsipopOS  = 0
+once rsipopOB  = 0
+rsiPop = 0
+if rsi14 < 30 then
+rsipopOS = 1
+elsif rsi14 > 70 then
+rsipopOB = 1
+endif
+if rsipopOS and (rsi14 >= 30) then
+rsipopOS = 0
+rsiPop = 1
+elsif rsipopOB and (rsi14 <= 70) then
+rsipopOB = 0
+rsiPop = -1
+endif
+// - END RSI-Pop ----------------------
+
+
+// --------------------------------- \
+// Auto-Fib (Long) Optimised Indicator
+// Requires RSI-Pop
+// --------------------------------- /
+//fibHigh, fibLow, support, t236, t382, t500, t618, t764, ma20, ma5 = CALL "AutoFib_long"
+
+once maPeriod = 34 // to eventually become dynamic
+once mDD = 150
+once fibSet = 0
+once hH = 0
+once lL = 0
+once cS = 99999
+
+// requreid by AutoFib
+ma20 = Average[maPeriod](Close)
+ma5  = Average[5](Close)
+
+if not fibSet then
+if ma5 crosses over ma20 then
+hH = 0
+cS = 99999
+cbi = barIndex
+else
+if (close > ma20) then
+hH = MAX(hH, High)
+endif
+if (ma5 > ma20) and (open < ma5) then
+cS = MIN(cS, Low)
+endif
+if (ma5 < ma20) and (hH > 0) and (low < cS) then
+spike = (Close<Open and Close-Low > 14) OR (Open<Close and Open-Low > 14)
+//rsiPop = CALL "RSI Pop"(close)
+fibSet = fibSet or rsiPop
+fibSet = fibSet or (((hH-Low) > mDD) and spike)
+if fibSet then
+lL = Lowest[(barIndex-cbi)](Low)
+endif
+endif
+endif
+endif
+if fibSet then
+fV = (ma5 > ma20)
+if fV then
+fibSet = 0
+hH = 0
+lL = 0
+cS = 99999
+//t236 = 0
+//t382 = 0
+//t500 = 0
+//t618 = 0
+//t764 = 0
+endif
+lL = MIN(lL, Low)
+//fibHigh = hH
+fbL = lL
+//support = cS // not needed at the moment
+if not fV then
+// Calculate fib levels
+//hMS = (fibHigh-fbL)
+hMS = (hH-fbL)
+t236 = fbL + hMS * 0.236
+t382 = fbL + hMS * 0.382
+t500 = fbL + hMS * 0.5
+t618 = fbL + hMS * 0.618
+t764 = fbL + hMS * 0.764
+endif
+endif //if fibSet
+// - END Auto-Fib (Long) ----------------------
+
+
+// -------------------------- \
+// System Defaults (do not touch)
+// -------------------------- /
+once currentStrategy = 0
+
+// -------------------------- \
+// Auto-Fib (Long) Optimised
+// Requires RSI-Pop
+// -------------------------- /
+
+if (not onMarket) and fibSet and (close < t236) then
+BUY positionSize CONTRACTS AT t236 STOP
+buyBarIndex     = barIndex + 1
+currentStrategy = 1
+endif
+
+if longOnMarket then
+
+// -- Strategy selections ---
+
+if currentStrategy = 1 then
+
+// exit rules
+if (barIndex-buyBarIndex)>=2 and POSITIONPERF < 0 then
+set target pprofit 1
+endif
+
+if (high > t382) then
+sell 1 contracts at market
+endif
+
+if (high > t500) then
+sell 1 contracts at market
+endif
+
+if (high > t618) then
+sell 1 contracts at market
+endif
+
+if (high > t764) then
+sell 1 contracts at market
+endif
+
+endif
+
+// Re-evaluate price action and current strategy
+// ...
+
+endif
+
+
+
+// debug -----------
+//graph hH as "fibHigh"
+//graph lL
+//graph t236
+//graph Close
+//graph ma20
+//graph ma5
+// ------------------
+
+if t236 or t382 or t500 or t618 or t764 then
+endif
